@@ -33,7 +33,8 @@ const Member = sequelize.define('Member', {
   },
 }, {
   tableName: 'members',
-  timestamps: false,
+  paranoid: true, 
+  timestamps: true,
 });
 
 // Define relationships

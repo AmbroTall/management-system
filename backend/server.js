@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const path = require('path');
 const sequelize = require('./config/database');  
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 dotenv.config();  // Load environment variables
@@ -17,6 +18,8 @@ app.use(bodyParser.json());  // Parse JSON requests
 // Import Routes
 const authRoutes = require('./controllers/userController');
 const memberRoutes = require('./controllers/membersController');
+app.use('/api/dashboard', dashboardRoutes);
+
 
 // Use Routes
 app.use('/api/auth', authRoutes);  // Authentication routes (register, login)

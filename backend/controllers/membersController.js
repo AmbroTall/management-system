@@ -1,7 +1,7 @@
 const express = require('express');
 const authenticate = require('../middleware/auth');
 const upload = require('../middleware/upload'); // Multer middleware for file uploads
-const { Member, User, Role } = require('../models'); // Import models
+const { Member, User, Role, ActivityLog } = require('../models'); // Import models
 
 const router = express.Router();
 
@@ -27,6 +27,14 @@ router.post('/', authenticate, upload.single('profile_picture'), async (req, res
             profile_picture,
             role_id,
             created_by: user.id, // Set the creator as the current user
+        });
+        console.log("first", user)
+         // Log the activity
+        await ActivityLog.create({
+            action: 'Created Member',
+            timestamp: new Date(),
+            member_id: member.id,
+            user_id: user.id,
         });
 
         res.status(201).json(member);
@@ -111,6 +119,13 @@ router.put('/:id', authenticate, upload.single('profile_picture'), async (req, r
         member.role_id = role_id || member.role_id;
 
         await member.save();
+        // Log the activity
+        await ActivityLog.create({
+            action: 'Updated Member',
+            timestamp: new Date(),
+            member_id: member.id,
+            user_id: req.user.id,
+        });
 
         res.json(member);
     } catch (error) {
@@ -132,6 +147,13 @@ router.delete('/:id', authenticate, async (req, res) => {
         // if (member.created_by !== req.user.id) return res.status(403).json({ message: 'Unauthorized' });
 
         await member.destroy();
+        // Log the activity
+        await ActivityLog.create({
+            action: 'Deleted Member',
+            timestamp: new Date(),
+            member_id: member.id,
+            user_id: req.user.id,
+        });
 
         res.status(200).json({ message: 'Member deleted successfully' });
     } catch (error) {
