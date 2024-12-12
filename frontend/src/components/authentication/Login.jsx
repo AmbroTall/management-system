@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../../redux/apiCalls"
 
 const LoginForm = () => {
     const [formData, setFormData] = useState({ email: "", password: "" });
-    const [error, setError] = useState("");
+    const dispatch = useDispatch()
     const navigate = useNavigate();
+    const { error, isLoading} = useSelector((state) => state.auth)
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -13,16 +15,8 @@ const LoginForm = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await axios.post("/api/auth/login", formData);
-            const token = response.data.token; // Assume the API returns a token
-            localStorage.setItem("authToken", token); // Save token to localStorage
-            navigate("/"); // Redirect to dashboard
-        } catch (error) {
-            console.error("Error logging in:", error);
-            setError("Invalid email or password");
-        }
+        e.preventDefault()
+        loginUser(dispatch, formData) 
     };
 
     return (
@@ -30,7 +24,7 @@ const LoginForm = () => {
             <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-white text-center mb-4">Login</h2>
                 <form onSubmit={handleSubmit}>
-                    {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                    { error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                     <div className="mb-4">
                         <label htmlFor="email" className="block text-sm text-gray-400 mb-2">
                             Email
@@ -61,9 +55,12 @@ const LoginForm = () => {
                     </div>
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+                        className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition ${
+                            isLoading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        disabled={isLoading} // Disable button while loading
                     >
-                        Login
+                        {isLoading ? "Loading..." : "Login"}
                     </button>
                 </form>
                 <p className="text-gray-400 text-sm text-center mt-4">

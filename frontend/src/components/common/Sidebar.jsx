@@ -8,9 +8,9 @@ const SIDEBAR_ITEMS = [
 		name: "Overview",
 		icon: BarChart2,
 		color: "#6366f1",
-		href: "/",
+		href: "/home",
 	},
-	{ name: "Members", icon: Users, color: "#8B5CF6", href: "/Members" },
+	{ name: "Members", icon: Users, color: "#8B5CF6", href: "/members" },
 	{ name: "Roles", icon: Users, color: "#EC4899", href: "/users" },
 	{ name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
 ];

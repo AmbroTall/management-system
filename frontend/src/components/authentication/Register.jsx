@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUser } from "../../redux/apiCalls"
 
 const RegisterForm = () => {
     const [formData, setFormData] = useState({ username: "", email: "", password: "" });
-    const [error, setError] = useState("");
     const navigate = useNavigate();
+    const dispatch = useDispatch()
+    const { user, error, isLoading} = useSelector((state) => state.auth)
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -14,14 +16,13 @@ const RegisterForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            await axios.post("/api/auth/register", formData);
-            navigate("/login"); // Redirect to login after successful registration
-        } catch (error) {
-            console.error("Error registering:", error);
-            setError("Registration failed. Please try again.");
+        registerUser(dispatch, formData); 
+        // Check if registration was successful
+        if (user) {
+            navigate("/login"); // Redirect to login page
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -73,9 +74,12 @@ const RegisterForm = () => {
                     </div>
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+                        className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition ${
+                            isLoading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        disabled={isLoading} // Disable button while loading
                     >
-                        Register
+                        {isLoading ? "Loading..." : "Register"}
                     </button>
                 </form>
                 <p className="text-gray-400 text-sm text-center mt-4">

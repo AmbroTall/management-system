@@ -1,87 +1,62 @@
-import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearError } from "../src/redux/authSlice";
+import Sidebar from './components/common/Sidebar';
+import OverviewPage from './pages/OverviewPage';
+import Members from './pages/Members';
+import UsersPage from './pages/UsersPage';
+import SettingsPage from './pages/SettingsPage';
+import LoginForm from './components/authentication/Login';
+import RegisterForm from './components/authentication/Register';
 
-import Sidebar from "./components/common/Sidebar";
-
-import OverviewPage from "./pages/OverviewPage";
-import Members from "./pages/Members";
-import UsersPage from "./pages/UsersPage";
-import SettingsPage from "./pages/SettingsPage";
-import LoginForm from "./components/authentication/Login";
-import RegisterForm from "./components/authentication/Register";
-
-// Utility to check authentication (replace with real auth check logic)
-const isAuthenticated = () => {
-    return !!localStorage.getItem("authToken"); // Example: Check for a token in localStorage
-};
-
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-    if (!isAuthenticated()) {
-        return <Navigate to="/login" replace />;
-    }
-    return children;
-};
-
-function App() {
-    const location = useLocation(); // Get the current location
-
-    // Define paths where the sidebar should not be shown
-    const excludedPaths = ["/login", "/register"];
-    const shouldShowSidebar = !excludedPaths.includes(location.pathname);
+const App = () => {
+    const { token } = useSelector((state) => state.auth); // Authentication state
+    const location = useLocation();
+    const dispatch = useDispatch();
+    const excludedPaths = ['/login', '/register'];
+    const shouldShowSidebar = token && !excludedPaths.includes(window.location.pathname);
+    useEffect(() => {
+        // Clear error on every route change
+        dispatch(clearError());
+    }, [location, dispatch]);
 
     return (
-		<div className='flex h-screen bg-gray-900 text-gray-100 overflow-hidden'>
-			{/* Background */}
-			{/* <div className='fixed inset-0 z-0'>
-				<div className='absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80' />
-				<div className='absolute inset-0 backdrop-blur-sm' />
-			</div> */}
-
-            {isAuthenticated() && shouldShowSidebar && <Sidebar />}
-
+        <div className="flex h-screen bg-gray-900 text-gray-100">
+            {shouldShowSidebar && <Sidebar />}
             <div className="flex-1 overflow-auto">
                 <Routes>
-                    {/* Public Routes */}
-                    <Route path="/login" element={<LoginForm />} />
-                    <Route path="/register" element={<RegisterForm />} />
+                    {/* Redirect authenticated users from login and register */}
+                    <Route
+                        path="/login"
+                        element={token ? <Navigate to="/home" replace /> : <LoginForm />}
+                    />
+                    <Route
+                        path="/register"
+                        element={token ? <Navigate to="/home" replace /> : <RegisterForm />}
+                    />
 
                     {/* Protected Routes */}
                     <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute>
-                                <OverviewPage />
-                            </ProtectedRoute>
-                        }
+                        path="/home"
+                        element={token ? <OverviewPage /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/members"
-                        element={
-                            <ProtectedRoute>
-                                <Members />
-                            </ProtectedRoute>
-                        }
+                        element={token ? <Members /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/users"
-                        element={
-                            <ProtectedRoute>
-                                <UsersPage />
-                            </ProtectedRoute>
-                        }
+                        element={token ? <UsersPage /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/settings"
-                        element={
-                            <ProtectedRoute>
-                                <SettingsPage />
-                            </ProtectedRoute>
-                        }
+                        element={token ? <SettingsPage /> : <Navigate to="/login" replace />}
                     />
                 </Routes>
             </div>
         </div>
     );
-}
+};
 
 export default App;

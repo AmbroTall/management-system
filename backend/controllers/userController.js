@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
         // Create the new user
         console.log("Taller", req.body)
         
-        const user = await User.create({ username, email, password: hashedPassword, role_id });
+        const user = await User.create({ username, email, password: hashedPassword, role_id:1 });
 
         // Create a JWT token
         const token = jwt.sign({ user: { id: user.id } }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -36,10 +36,10 @@ router.post('/register', async (req, res) => {
             maxAge: 3600000,  // 1 hour expiration (same as JWT expiration)
         });
 
-        res.json({ token });  
+        res.status(201).json({ user });
     } catch (error) {
         console.error(error);
-        res.status(400).json({ message: 'Bad request' });
+        res.status(400).json({ message: 'An error occured during registration' });
     }
 });
 
