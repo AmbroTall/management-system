@@ -1,10 +1,10 @@
-              
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import Modal from "../components/modal/modal"; 
-import DynamicForm from "../components/common/dynamicForms";
+import DynamicForm from "../components/shared/dynamicForms";
+import Header from "../components/common/Header";
 import Toast from "../components/common/toast"; 
+import axiosInstance from "../axiosInstanceJson";
 
 const MemberTable = () => {
     const [members, setMembers] = useState([]);
@@ -15,21 +15,19 @@ const MemberTable = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState("");
-    const [selectedRole, setSelectedRole] = useState(null);
-	const [reloadRoles, setReloadRoles] = useState(false); // Trigger for reloading members
+    const [selectedMember, setSelectedMember] = useState(null);
+	const [reloadMembers, setReloadMembers] = useState(false); // Trigger for reloading members
     const [toast, setToast] = useState({ show: false, message: "", isError: false });
     const [loading, setLoading] = useState(false);
     const itemsPerPage = 5;
 
-   // Fetch members from the backend
-	useEffect(() => {
+    // Fetch members from the backend
+    useEffect(() => {
 		const fetchMembers = async () => {
 			setLoading(true); // Start loading
 			try {
-				const response = await axios.get("/api/members", {
-					headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
-				});
-				setMembers(response.data);
+				const response = await axiosInstance.get("/roles"); // Use axiosInstance
+				setMembers(response.data.roles);
 			} catch (error) {
 				console.error("Error fetching members:", error);
 				setToast({ show: true, message: "Error fetching members", isError: true });
@@ -39,7 +37,7 @@ const MemberTable = () => {
 		};
 
 		fetchMembers();
-	}, [reloadRoles]); // Re-run when reloadMembers changes
+	}, [reloadMembers]); // Re-run when reloadMembers changes
 
     // Filter and sort members
     useEffect(() => {
@@ -78,48 +76,39 @@ const MemberTable = () => {
     };
 
     // Open and close modal
-    const handleOpenModal = (type, role = null) => {
+    const handleOpenModal = (type, member = null) => {
         setModalType(type);
-        setSelectedRole(role);
+        setSelectedMember(member);
         setShowModal(true);
     };
 
     const handleCloseModal = () => {
         setShowModal(false);
         setModalType("");
-        setSelectedRole(null);
+        setSelectedMember(null);
     };
 
     const modalTitles = {
-        "create-member": "Create Member",
-        "edit-member": "Edit Member",
         "create-role": "Create Role",
         "edit-role": "Edit Role",
-		"delete-member": "Delete Member"
+		"delete-role": "Delete role"
     };
 
     // Delete member
 	const handleDelete = async () => {
 		setLoading(true);
 		try {
-			// Get the token from localStorage
-			const token = localStorage.getItem("authToken");
-
-			// Make the DELETE request with Authorization header
-			await axios.delete(`/api/role/${selectedRole.id}`, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			});
-
+			// Use axiosInstance for DELETE request
+			await axiosInstance.delete(`/roles/${selectedMember.id}`);
+	
 			// Update the members state
-			setMembers(members.filter((member) => member.id !== selectedRole.id));
+			setMembers(members.filter((member) => member.id !== selectedMember.id));
 			setShowModal(false);
-			setReloadRoles((prev) => !prev); // Toggle reloadMembers to trigger useEffect
-			setToast({ show: true, message: "Member deleted successfully", isError: false });
+			setReloadMembers((prev) => !prev); // Toggle reloadMembers to trigger useEffect
+			setToast({ show: true, message: "Role deleted successfully", isError: false });
 		} catch (error) {
-			console.error("Error deleting member:", error);
-			setToast({ show: true, message: "Error deleting member", isError: true });
+			console.error("Error deleting role:", error);
+			setToast({ show: true, message: "Error deleting role", isError: true });
 		} finally {
 			setLoading(false);
 		}
@@ -131,18 +120,14 @@ const MemberTable = () => {
 		try {
 			const endpoint =
 				modalType === "create-role"
-					? "/api/role"
-					: `/api/role/${selectedRole.id}`;
-			const method = modalType === "create-member" ? axios.post : axios.put;
-
-			await method(endpoint, formData, {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-				},
-			});
-
-			setToast({ show: true, message: "Member saved successfully", isError: false });
-			setReloadRoles((prev) => !prev); // Toggle reloadMembers to trigger useEffect
+					? "/roles"
+					: `/roles/${selectedMember.id}`;
+			const method = modalType === "create-role" ? axiosInstance.post : axiosInstance.put;
+	
+			await method(endpoint, formData);
+	
+			setToast({ show: true, message: "Role saved successfully", isError: false });
+			setReloadMembers((prev) => !prev); // Toggle reloadMembers to trigger useEffect
 			handleCloseModal(); // Close the modal
 		} catch (error) {
 			console.error("Error saving member:", error);
@@ -154,15 +139,12 @@ const MemberTable = () => {
     // Field configurations
     const memberFields = [
         { name: "name", label: "Name", type: "text", required: true },
-		{ name: "profile_picture", label: "Profile Picture", type: "file", required: false }, 
-        { name: "email", label: "Email", type: "email", required: true },
-        { name: "date_of_birth", label: "Date of Birth", type: "date", required: true },
-        { name: "role", label: "Role", type: "text", required: true },
-		{ name: "createdAt", label: "Created At", type: "text",  hidden: true },
+		{ name: "description", label: "Description", type: "text", required: true }, 
     ];
 
     return (
 		<div className='flex-1 overflow-auto relative z-10'>
+			<Header title='Members' />
 			{loading ? (
 				<div className="flex justify-center items-center h-64">
 					<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -178,10 +160,10 @@ const MemberTable = () => {
 						<div className='flex justify-between items-center mb-6'>
 							<h2 className='text-xl font-semibold text-gray-100'>Members List</h2>
 							<button
-								onClick={() => handleOpenModal("create-member")}
+								onClick={() => handleOpenModal("create-role")}
 								className='bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600'
 							>
-								Add Member
+								Add Role
 							</button>
 						</div>
 
@@ -189,7 +171,7 @@ const MemberTable = () => {
 						<div className='relative mb-6'>
 							<input
 								type='text'
-								placeholder='Search members...'
+								placeholder='Search roles...'
 								className='bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
@@ -205,15 +187,12 @@ const MemberTable = () => {
 										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer' onClick={() => handleSort("name")}>
 											Name {sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : ""}
 										</th>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer' onClick={() => handleSort("email")}>
-											Email {sortField === "email" ? (sortOrder === "asc" ? "▲" : "▼") : ""}
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer'>
+											Description 
 										</th>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-											Role
-										</th>
-
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-											Created At
+		
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer' onClick={() => handleSort("name")}> 
+											Created At {sortField === "createdAt" ? (sortOrder === "asc" ? "▲" : "▼") : ""}
 										</th>
 										<th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
 											Actions
@@ -229,37 +208,24 @@ const MemberTable = () => {
 											transition={{ duration: 0.3 }}
 										>
 											<td className='px-6 py-4 whitespace-nowrap'>
-												<div className='flex items-center'>
-													<div className='flex-shrink-0 h-10 w-10'>
-														<div className='h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold'>
-															{member.name.charAt(0)}
-														</div>
-													</div>
-													<div className='ml-4'>
-														<div className='text-sm font-medium text-gray-100'>{member.name}</div>
-													</div>
-												</div>
+												<div className='text-sm text-gray-300'>{member.name}</div>
 											</td>
 											<td className='px-6 py-4 whitespace-nowrap'>
-												<div className='text-sm text-gray-300'>{member.email}</div>
+												<div className='text-sm text-gray-300'>{member.description}</div>
 											</td>
-											<td className='px-6 py-4 whitespace-nowrap'>
-												<span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-800 text-blue-100'>
-													{member.Role.name}
-												</span>
-											</td>
+											
 											<td className='px-6 py-4 whitespace-nowrap'>
 												<div className='text-sm text-gray-300'>{member.createdAt}</div>
 											</td>
 											<td className='px-6 py-4 whitespace-nowrap flex gap-2'>
 												<button
-													onClick={() => handleOpenModal("edit-member", member)}
+													onClick={() => handleOpenModal("edit-role", member)}
 													className='text-indigo-400 hover:text-indigo-300'
 												>
 													Edit
 												</button>
 												<button
-													onClick={() => handleOpenModal("delete-member", member)}
+													onClick={() => handleOpenModal("delete-role", member)}
 													className='text-red-400 hover:text-red-300'
 												>
 													Delete
@@ -301,12 +267,12 @@ const MemberTable = () => {
 								<DynamicForm
 									fields={memberFields}
 									onSubmit={handleFormSubmit}
-									initialValues={selectedRole || {}}
+									initialValues={selectedMember || {}}
 									onCancel={handleCloseModal}
 								/>
 							) : (
 								<div>
-									<p>Are you sure you want to delete {selectedRole?.name}?</p>
+									<p>Are you sure you want to delete {selectedMember?.name}?</p>
 									<div className="flex justify-end gap-2 mt-4">
 										<button
 											onClick={handleCloseModal}

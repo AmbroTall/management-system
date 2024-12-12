@@ -7,6 +7,7 @@ const router = express.Router();
 // Create role
 router.post('/', authenticate, async (req, res) => {
     const { name, description } = req.body;
+    console.log("first", req.body)
     try {
         // Get the authenticated user's ID
         const user = await User.findByPk(req.user.id);
@@ -130,7 +131,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         await ActivityLog.create({
             action: 'Deleted Role',
             timestamp: new Date(),
-            role_id: role.id,
+            member_id: role.id,
             user_id: req.user.id,
         });
 

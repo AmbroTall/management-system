@@ -1,4 +1,4 @@
-import { BarChart2, Menu, Settings, Users } from "lucide-react";
+import { BarChart2, Menu, Users } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -11,8 +11,7 @@ const SIDEBAR_ITEMS = [
 		href: "/home",
 	},
 	{ name: "Members", icon: Users, color: "#8B5CF6", href: "/members" },
-	{ name: "Roles", icon: Users, color: "#EC4899", href: "/users" },
-	{ name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
+	{ name: "Roles", icon: Users, color: "#EC4899", href: "/roles" }
 ];
 
 const Sidebar = () => {

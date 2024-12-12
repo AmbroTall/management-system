@@ -12,7 +12,7 @@ router.post('/', authenticate, upload.single('profile_picture'), async (req, res
 
     try {
         // Check if role_id exists
-        const role = await Role.findByPk(role_id);
+        const role = await Role.findByPk(parseInt(role_id));
         if (!role) return res.status(404).json({ message: 'Role not found' });
 
         // Get the authenticated user's ID
@@ -25,7 +25,7 @@ router.post('/', authenticate, upload.single('profile_picture'), async (req, res
             email,
             date_of_birth,
             profile_picture,
-            role_id,
+            role_id : role.id,
             created_by: user.id, // Set the creator as the current user
         });
         console.log("first", user)
@@ -56,7 +56,7 @@ router.get('/', authenticate, async (req, res) => {
         // Fetch members with pagination
         const { count, rows: members } = await Member.findAndCountAll({
             offset: parseInt(offset), // Skip the first "offset" records
-            limit: parseInt(limit),  // Limit the number of records returned
+            // limit: parseInt(limit),  // Limit the number of records returned
             include: [
                 {
                     model: User,

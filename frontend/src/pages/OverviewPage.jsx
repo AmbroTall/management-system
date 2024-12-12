@@ -64,43 +64,42 @@ const OverviewPage = () => {
 				</motion.div>
 
 				{/* RECENT ACTIVITY LOGS */}
-				<div className='mb-8'>
-					<h2 className='text-xl font-bold mb-4'>Recent Activities</h2>
-					<table className='w-full table-auto text-black border-collapse border border-gray-300'>
-						<thead>
-							<tr className='bg-gray-100'>
-								<th className='border px-4 py-2'>Date</th>
-								<th className='border px-4 py-2'>Action</th>
-								<th className='border px-4 py-2'>Performed By</th>
-							</tr>
-						</thead>
-						<tbody>
-								<ul>
-									{activityLogs.map((log, index) => (
-										<li key={index}>
-											{new Date(log.timestamp).toLocaleString()} - {log.action} by {log.performedBy}
-										</li>
-									))}
-								</ul>
-							{/* {Array.isArray(activityLogs) && activityLogs.length > 0 ? (
-								activityLogs.map((log, index) => (
-									<tr key={index}>
-										<td className='border px-4 py-2'>{new Date(log.timestamp).toLocaleString()}</td>
-										<td className='border px-4 py-2'>{log.action}</td>
-										<td className='border px-4 py-2'>{log.performedBy}</td>
-									</tr>
-								))
-							) : (
-								<tr>
-									<td colSpan="3" className="border px-4 py-2 text-center">
-										No recent activities found
-									</td>
+				<div className="mb-8 bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-lg p-6">
+					<h2 className="text-xl font-bold mb-4 text-gray-100">Recent Activities</h2>
+					<div className="overflow-x-auto">
+						<table className="w-full table-auto border-collapse text-gray-300">
+							<thead>
+								<tr className="bg-gray-700 text-gray-100">
+									<th className="border border-gray-600 px-4 py-2 text-left">Date</th>
+									<th className="border border-gray-600 px-4 py-2 text-left">Action</th>
+									<th className="border border-gray-600 px-4 py-2 text-left">Performed By</th>
 								</tr>
-							)} */}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								{Array.isArray(activityLogs) && activityLogs.length > 0 ? (
+									activityLogs.map((log, index) => (
+										<tr
+											key={index}
+											className={`${index % 2 === 0 ? "bg-gray-800" : "bg-gray-700"} hover:bg-gray-600`}
+										>
+											<td className="border border-gray-600 px-4 py-2">
+												{new Date(log.timestamp).toLocaleString()}
+											</td>
+											<td className="border border-gray-600 px-4 py-2">{log.action}</td>
+											<td className="border border-gray-600 px-4 py-2">{log.performedBy}</td>
+										</tr>
+									))
+								) : (
+									<tr>
+										<td colSpan="3" className="border border-gray-600 px-4 py-2 text-center text-gray-400">
+											No recent activities found
+										</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
 				</div>
-
 				{/* CHARTS */}
 				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
 					<RoleDistributionChart data={roleData} />

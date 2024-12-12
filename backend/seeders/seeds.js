@@ -20,7 +20,7 @@ const seedDatabase = async () => {
         }
 
         // Seed members
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 300; i++) {
             await Member.create({
                 name: faker.name.fullName(),
                 email: faker.internet.email(),

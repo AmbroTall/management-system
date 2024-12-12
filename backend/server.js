@@ -10,6 +10,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const app = express();
 dotenv.config();  // Load environment variables
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Middleware
 app.use(cors());  // Enable Cross-Origin Request Sharing (CORS)
 app.use(cookieParser());  // Parse cookies in the incoming requests

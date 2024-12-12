@@ -22,7 +22,7 @@ const Member = sequelize.define('Member', {
   },
   role_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
   },
   profile_picture: {
     type: DataTypes.STRING,

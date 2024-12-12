@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import Modal from "../components/modal/modal"; 
-import DynamicForm from "../components/common/dynamicForms";
+import DynamicForm from "../components/shared/dynamicForms";
+import Header from "../components/common/Header";
 import Toast from "../components/common/toast"; 
+import axiosInstance from "../axiosInstance";
 
 const MemberTable = () => {
     const [members, setMembers] = useState([]);
@@ -12,23 +13,23 @@ const MemberTable = () => {
     const [sortField, setSortField] = useState("name");
     const [sortOrder, setSortOrder] = useState("asc");
     const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState("");
     const [selectedMember, setSelectedMember] = useState(null);
 	const [reloadMembers, setReloadMembers] = useState(false); // Trigger for reloading members
     const [toast, setToast] = useState({ show: false, message: "", isError: false });
     const [loading, setLoading] = useState(false);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
-   // Fetch members from the backend
-	useEffect(() => {
+    // Fetch members from the backend
+    useEffect(() => {
 		const fetchMembers = async () => {
 			setLoading(true); // Start loading
 			try {
-				const response = await axios.get("/api/members", {
-					headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
-				});
-				setMembers(response.data);
+                const response = await axiosInstance.get(`/members`);
+				setMembers(response.data.members);
+				setTotalPages(response.data.totalPages); // Update total pages from response
 			} catch (error) {
 				console.error("Error fetching members:", error);
 				setToast({ show: true, message: "Error fetching members", isError: true });
@@ -61,11 +62,10 @@ const MemberTable = () => {
         setFilteredMembers(sortedMembers);
     }, [members, search, sortField, sortOrder]);
 
-    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
-    const paginatedMembers = filteredMembers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+	const startIndex = (currentPage - 1) * itemsPerPage;
+	const endIndex = startIndex + itemsPerPage;
+	const paginatedMembers = filteredMembers.slice(startIndex, endIndex);
+
 
 	const handleSort = (field) => {
         if (sortField === field) {
@@ -101,16 +101,9 @@ const MemberTable = () => {
 	const handleDelete = async () => {
 		setLoading(true);
 		try {
-			// Get the token from localStorage
-			const token = localStorage.getItem("authToken");
-
-			// Make the DELETE request with Authorization header
-			await axios.delete(`/api/members/${selectedMember.id}`, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			});
-
+			// Use axiosInstance for DELETE request
+			await axiosInstance.delete(`/members/${selectedMember.id}`);
+	
 			// Update the members state
 			setMembers(members.filter((member) => member.id !== selectedMember.id));
 			setShowModal(false);
@@ -130,16 +123,12 @@ const MemberTable = () => {
 		try {
 			const endpoint =
 				modalType === "create-member"
-					? "/api/members"
-					: `/api/members/${selectedMember.id}`;
-			const method = modalType === "create-member" ? axios.post : axios.put;
-
-			await method(endpoint, formData, {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-				},
-			});
-
+					? "/members"
+					: `/members/${selectedMember.id}`;
+			const method = modalType === "create-member" ? axiosInstance.post : axiosInstance.put;
+	
+			await method(endpoint, formData);
+	
 			setToast({ show: true, message: "Member saved successfully", isError: false });
 			setReloadMembers((prev) => !prev); // Toggle reloadMembers to trigger useEffect
 			handleCloseModal(); // Close the modal
@@ -156,12 +145,13 @@ const MemberTable = () => {
 		{ name: "profile_picture", label: "Profile Picture", type: "file", required: false }, 
         { name: "email", label: "Email", type: "email", required: true },
         { name: "date_of_birth", label: "Date of Birth", type: "date", required: true },
-        { name: "role", label: "Role", type: "text", required: true },
+		{ name: "role_id", label: "Role", type: "select", required: true, apiEndpoint: "/roles" },
 		{ name: "createdAt", label: "Created At", type: "text",  hidden: true },
     ];
 
     return (
 		<div className='flex-1 overflow-auto relative z-10'>
+			<Header title='Members' />
 			{loading ? (
 				<div className="flex justify-center items-center h-64">
 					<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -229,13 +219,23 @@ const MemberTable = () => {
 										>
 											<td className='px-6 py-4 whitespace-nowrap'>
 												<div className='flex items-center'>
-													<div className='flex-shrink-0 h-10 w-10'>
-														<div className='h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold'>
-															{member.name.charAt(0)}
-														</div>
+													<div className="flex-shrink-0 h-10 w-10">
+														{member.profile_picture ? (
+															// Display the profile picture if available
+															<img
+																src={`http://localhost:5000/${member.profile_picture}`}
+																alt={`${member.name}'s profile`}
+																className="h-10 w-10 rounded-full object-cover"
+															/>
+														) : (
+															// Display the first character of the name if profile picture is not available
+															<div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold">
+																{member.name.charAt(0)}
+															</div>
+														)}
 													</div>
-													<div className='ml-4'>
-														<div className='text-sm font-medium text-gray-100'>{member.name}</div>
+													<div className="ml-4">
+														<div className="text-sm font-medium text-gray-100">{member.name}</div>
 													</div>
 												</div>
 											</td>
@@ -244,7 +244,7 @@ const MemberTable = () => {
 											</td>
 											<td className='px-6 py-4 whitespace-nowrap'>
 												<span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-800 text-blue-100'>
-													{member.Role.name}
+													{member.Role?.name}
 												</span>
 											</td>
 											<td className='px-6 py-4 whitespace-nowrap'>
