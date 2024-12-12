@@ -18,12 +18,14 @@ app.use(bodyParser.json());  // Parse JSON requests
 // Import Routes
 const authRoutes = require('./controllers/userController');
 const memberRoutes = require('./controllers/membersController');
+const rolesRoutes = require('./controllers/rolesController');
 app.use('/api/dashboard', dashboardRoutes);
 
 
 // Use Routes
 app.use('/api/auth', authRoutes);  // Authentication routes (register, login)
 app.use('/api/members', memberRoutes);  // Members management routes
+app.use('/api/roles', rolesRoutes);  // Members management routes
 
 // Public folder for frontend (if serving from the same server)
 app.use(express.static(path.join(__dirname, 'public')));

@@ -14,6 +14,7 @@ const Role = sequelize.define('Role', {
   description: {
     type: DataTypes.STRING,
   },
+
 }, {
   tableName: 'roles',
   paranoid: true,

@@ -44,30 +44,45 @@ router.post('/', authenticate, upload.single('profile_picture'), async (req, res
     }
 });
 
-// Get all members
+// Get all members with pagination
 router.get('/', authenticate, async (req, res) => {
     try {
-        // In your routes
-        const members = await Member.findAll({
+        // Extract pagination parameters from the query string
+        const { page = 1, limit = 10 } = req.query;
+
+        // Calculate offset based on page and limit
+        const offset = (page - 1) * limit;
+
+        // Fetch members with pagination
+        const { count, rows: members } = await Member.findAndCountAll({
+            offset: parseInt(offset), // Skip the first "offset" records
+            limit: parseInt(limit),  // Limit the number of records returned
             include: [
-            {
-                model: User,
-                as: 'creator', // Must match the alias in the association
-                attributes: ['username', 'email'],
-            },
-            {
-                model: Role,
-                attributes: ['name'],
-            },
+                {
+                    model: User,
+                    as: 'creator', // Must match the alias in the association
+                    attributes: ['username', 'email'],
+                },
+                {
+                    model: Role,
+                    attributes: ['name'],
+                },
             ],
         });
-  
-        res.json(members);
+
+        // Return paginated results
+        res.json({
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalRecords: count,
+            members,
+        });
     } catch (error) {
         console.error('Error fetching members:', error);
         res.status(500).json({ message: 'Error fetching members', error });
     }
 });
+
 
 // Get a specific member by ID
 router.get('/:id', authenticate, async (req, res) => {
